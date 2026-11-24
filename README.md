@@ -4,7 +4,7 @@ Open the link in Safari, tap Share, then "Add to Home Screen".
 ## Updating
 Updates come automatically when the owner makes changes to the app. People get it the next time they open the app while online.
 
-## What is saved, and what is not (v3)
+## What is saved, and what is not
 
 - Everything you add, including photos, is stored in this browser on the phone (IndexedDB) and is there when you reopen the app.
 - A backup is saved automatically each day (last 7 kept). "Save a backup to Files" makes a real file; with a backup password it is encrypted (AES-GCM).
@@ -13,7 +13,7 @@ Updates come automatically when the owner makes changes to the app. People get i
 - Clearing Safari website data, or deleting the home-screen app, erases the data. Keep a backup file in Files or iCloud Drive.
 - Sync with a partner works through the sync server (see sync-server/SETUP.md) while the app is open.
 
-## Updating safely (v9)
+## Updating safely
 
 - Your data, photos, background image, colors and widget order are stored in the installed app's own storage, separate from the code. Uploading new files to GitHub never touches it.
 - The first time a new version opens, it saves a copy of your data first ("Before the last app update" under Settings > Backups and safety).

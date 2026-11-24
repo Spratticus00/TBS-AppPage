@@ -22,3 +22,11 @@ Replace `index.html` on GitHub with the new version. People get it the next time
 - "Share my data with partner" makes a file; "Import Partner Data" reads one. This works between two people using this preview only.
 - Clearing Safari website data, or deleting the home-screen app, erases the data. Keep a backup file in Files or iCloud Drive.
 - Not possible in a web app: Face ID, live sync, Siri/Shortcuts, push notifications.
+
+## Updating safely (v9)
+
+- Your data, photos, background image, colors and widget order are stored in the installed app's own storage, separate from the code. Uploading new files to GitHub never touches it.
+- The first time a new version opens, it saves a copy of your data first ("Before the last app update" under Settings > Backups and safety).
+- If a new version can't read the saved data, it changes nothing and saves nothing.
+- Do not delete the Home Screen icon to update. On iPhone that erases the installed app's data. Updates arrive on their own: close and reopen the app.
+- When you publish a new version, change APPVER in index.html (search for `var APPVER=`) and the cache name in sw.js.

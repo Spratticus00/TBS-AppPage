@@ -2008,14 +2008,39 @@ function rootNotice(m){showAlert("Track Budget Save",m,[{t:"OK",act:"rootok",b:1
  };
  Object.keys(P).forEach(function(k){SYM[k]=P[k]});
  eyeBtn=function(){var off=S.hide;return '<button class="ibtn" data-act="hide" aria-label="'+(off?"Show amounts":"Hide amounts")+'" aria-pressed="'+!!off+'"><svg viewBox="0 0 24 24"><path d="M1.8 12C4.2 7.4 7.8 5 12 5s7.8 2.4 10.2 7c-2.4 4.6-6 7-10.2 7S4.2 16.6 1.8 12z"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.9" fill="currentColor" stroke="none"/>'+(off?'<path d="M3.5 3.5l17 17" stroke-width="2"/>':"")+'</svg></button>'};
- var css=document.createElement("style");css.textContent=".tab svg{width:26px;height:26px}.sico{stroke-width:1.75}.ibtn svg{stroke-width:1.9}.roundb svg{stroke-width:2.4}.stdlb{background:var(--accent)!important;color:#fff!important}.stdlb svg{width:24px!important;height:24px!important;stroke-width:2!important}.csvb svg{width:24px!important;height:24px!important}";document.head.appendChild(css);
+ var css=document.createElement("style");css.textContent=".tab svg{width:26px;height:26px}.sico{stroke-width:1.75}.ibtn svg{stroke-width:1.9}.roundb svg{stroke-width:2.4}.stdlb{background:var(--accent)!important;color:#fff!important}.stdlb svg{width:24px!important;height:24px!important;stroke-width:2!important}.csvb svg{width:24px!important;height:24px!important}.netbig{font-variant-numeric:tabular-nums}";document.head.appendChild(css);
+})();
+
+/* ---------- Slot-machine roll for the Summary net and Accounts total, timed like the app ---------- */
+(function(){var lastKey=null,lastRun=0;
+ rollHero=function(){if(S.anim===false)return;
+  var v=$("v-"+S.tab);var el=v&&(S.tab==="summary"||S.tab==="accounts")?v.querySelector(".netbig"):null;if(!el||!el.isConnected)return;
+  if(Date.now()-lastRun<80&&el._rolling)return;lastRun=Date.now();
+  var fin=el._fin&&el._rolling?el._fin:el.textContent;el._fin=fin;el._rolling=true;
+  var LH=el.getBoundingClientRect().height;if(!LH)return;
+  var chars=fin.split(""),total=chars.filter(function(c){return /\d/.test(c)}).length,order=0,longest=0;
+  el.style.height=LH+"px";el.style.overflow="hidden";el.style.fontVariantNumeric="tabular-nums";el.textContent="";
+  chars.forEach(function(ch){
+   if(!/\d/.test(ch)){el.appendChild(document.createTextNode(ch));return}
+   var d=+ch,delay=(total-1-order)*70,dur=550+delay;order++;longest=Math.max(longest,dur+30);
+   var cell=document.createElement("span");cell.style.cssText="display:inline-block;height:"+LH+"px;line-height:"+LH+"px;overflow:hidden;vertical-align:top";
+   var strip=document.createElement("span");strip.style.cssText="display:block;will-change:transform";
+   var h="";for(var i=0;i<30;i++)h+='<span style="display:block;height:'+LH+'px;line-height:'+LH+'px">'+(i%10)+'</span>';strip.innerHTML=h;cell.appendChild(strip);el.appendChild(cell);
+   try{strip.animate([{transform:"translateY(0)"},{transform:"translateY(-"+(20+d)*LH+"px)"}],{duration:dur,delay:30,easing:"cubic-bezier(.12,.85,.25,1)",fill:"forwards"})}catch(e){}});
+  clearTimeout(el._rt);el._rt=setTimeout(function(){el._rolling=false;if(el.isConnected){el.textContent=fin;el.style.height="";el.style.overflow=""}},longest+80)};
+ /* the app rolls when the tab appears, when the Summary month changes, and when the Accounts total changes */
+ var _r=render;render=function(){_r.apply(this,arguments);try{
+  var v=$("v-"+S.tab),el=v&&(S.tab==="summary"||S.tab==="accounts")?v.querySelector(".netbig"):null;
+  var key=S.tab+"|"+(S.tab==="summary"?(S.month&&S.month.getTime?S.month.getTime():""):S.tab==="accounts"&&el?el.textContent:"");
+  if(key!==lastKey){var tabChanged=!lastKey||lastKey.split("|")[0]!==S.tab;lastKey=key;if(el&&!S.hide)rollHero()}}catch(e){}};
 })();
 
 /* ---------- Real storage: saved on this phone, backups, PIN lock, partner files ---------- */
 (function(){
 var PH=$("phone");PH.style.visibility="hidden";
 var DB=null,READY=false,saveT=null,dirty=false,AB=[];
-var SKEYS=["cats","rules","bills","goals","recur","dismissed","savedF","settled","imps","held","example","readA","chlog","sync","scope","month","imported","importedAt","accent","bunnyc","widgetc","bgMode","bgHex","bgImg","anim","bunny","worder","nameSet","remind","days","lastBackup","lastBackupAt","snooze","pwOn","pw","pinSet","pinH","pinSalt","face","delay","fails","lockUntil","pinDone","catOrd","hideWording","hideNums","feat","alerts","qaCat","qaAcct","impMem","imode","alertS"];
+var APPVER="2026-11-24c",LOADFAIL=false;
+var SKEYS=["ch","cats","rules","bills","goals","recur","dismissed","savedF","settled","imps","held","example","readA","chlog","sync","scope","month","imported","importedAt","accent","bunnyc","widgetc","bgMode","bgHex","bgImg","anim","bunny","worder","nameSet","remind","days","lastBackup","lastBackupAt","snooze","pwOn","pw","pinSet","pinH","pinSalt","face","delay","fails","lockUntil","pinDone","catOrd","hideWording","hideNums","feat","alerts","qaCat","qaAcct","impMem","imode","alertS"];
 /* things that belong to this phone, not to the data: a restored backup never changes them */
 var DEVKEYS=["remind","days","lastBackup","lastBackupAt","snooze","pwOn","pw","pinSet","pinH","pinSalt","face","delay","fails","lockUntil","pinDone","sync","scope","imported","importedAt","month"];
 
@@ -2056,31 +2081,33 @@ async function giveFile(name,text,viaShare,title){var blob=new Blob([text],{type
 function pick(o,keys){var r={};keys.forEach(function(k){if(o[k]!==undefined){try{r[k]=structuredClone(o[k])}catch(e){}}});return r}
 var _hp=null;
 function collect(withSam){if(S.pin&&S.pinSet){if(_hp!==S.pin+"|"+S.pinSalt){S.pinH=hashPin(S.pin);_hp=S.pin+"|"+S.pinSalt}}if(!S.pinSet){S.pinH=null}
- var d={v:1,at:Date.now(),ME:structuredClone({accts:ME.accts,cats:ME.cats,tx:ME.tx,rules:ME.rules||{}}),S:pick(S,SKEYS)};
+ var d={v:1,appVer:APPVER,at:Date.now(),ME:structuredClone({accts:ME.accts,cats:ME.cats,tx:ME.tx,rules:ME.rules||{}}),S:pick(S,SKEYS)};
  if(withSam)d.SAM=structuredClone({accts:SAM.accts,cats:SAM.cats,tx:SAM.tx});return d}
 function apply(d,full){ME.accts=d.ME.accts;ME.cats=d.ME.cats;ME.tx=d.ME.tx;ME.rules=d.ME.rules||{};
  SKEYS.forEach(function(k){if(!full&&DEVKEYS.indexOf(k)>=0)return;if(d.S&&d.S[k]!==undefined)S[k]=d.S[k]});
  if(full&&d.SAM){SAM.accts=d.SAM.accts;SAM.cats=d.SAM.cats;SAM.tx=d.SAM.tx;SAMTX0.length=0;d.SAM.tx.forEach(function(t){SAMTX0.push(t)})}
  if(S.chlog)S.chlog.forEach(function(e){delete e.uid});
  if(typeof S.month==="string")S.month=new Date(S.month);
+ if(S.ch){S.ch.sel=null;S.ch.slice=null;S.ch.day=null;S.ch.nw=null}
  calcBal()}
 
 /* ----- IndexedDB ----- */
 function open(){return new Promise(function(res,rej){var r=indexedDB.open("tbs",1);r.onupgradeneeded=function(){var db=r.result;db.createObjectStore("kv");db.createObjectStore("backups",{keyPath:"key"})};r.onsuccess=function(){res(r.result)};r.onerror=function(){rej(r.error)}})}
 function tx(store,mode,fn){return new Promise(function(res,rej){var t=DB.transaction(store,mode),o=t.objectStore(store),out=fn(o);t.oncomplete=function(){res(out&&out.result)};t.onerror=t.onabort=function(){rej(t.error)}})}
-function save(){if(!READY||!DB)return;dirty=false;try{var d=collect(true);tx("kv","readwrite",function(o){return o.put(d,"state")}).catch(function(){})}catch(e){}}
-function sched(){if(!READY)return;dirty=true;clearTimeout(saveT);saveT=setTimeout(save,700)}
+function save(){if(!READY||!DB||LOADFAIL)return;dirty=false;try{var d=collect(true);tx("kv","readwrite",function(o){return o.put(d,"state")}).catch(function(){})}catch(e){}}
+function sched(){if(!READY||LOADFAIL)return;dirty=true;clearTimeout(saveT);saveT=setTimeout(save,700)}
 var _render=render;render=function(){_render.apply(this,arguments);sched()};
 document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden"&&dirty){clearTimeout(saveT);save()}else if(document.visibilityState==="visible")autoBackup()});
 window.addEventListener("pagehide",function(){if(dirty){clearTimeout(saveT);save()}});
 
 /* ----- automatic backups: one per day, the last 7 kept, stored beside your data ----- */
-function listBackups(){return DB?tx("backups","readonly",function(o){return o.getAll()}).then(function(l){AB=(l||[]).filter(function(b){return b.key!=="before-restore"}).sort(function(a,b){return a.key<b.key?1:-1});AB.before=(l||[]).filter(function(b){return b.key==="before-restore"})[0]||null;return AB}):Promise.resolve([])}
+function listBackups(){return DB?tx("backups","readonly",function(o){return o.getAll()}).then(function(l){AB=(l||[]).filter(function(b){return b.key!=="before-restore"&&b.key!=="before-update"}).sort(function(a,b){return a.key<b.key?1:-1});AB.before=(l||[]).filter(function(b){return b.key==="before-restore"})[0]||null;AB.upd=(l||[]).filter(function(b){return b.key==="before-update"})[0]||null;return AB}):Promise.resolve([])}
 function putBackup(key,label){var d=collect(false);return tx("backups","readwrite",function(o){return o.put({key:key,at:Date.now(),accts:d.ME.accts.length,txs:d.ME.tx.length,label:label||"",data:d})})}
-function autoBackup(){if(!READY||!DB||S.example||!ME.accts.length)return;
+function autoBackup(){if(!READY||!DB||LOADFAIL||S.example||!ME.accts.length)return;
  listBackups().then(function(l){var k=today();if(l.some(function(b){return b.key===k}))return;return putBackup(k,"Automatic").then(function(){return listBackups()}).then(function(l2){var old=l2.slice(7);if(!old.length)return;return tx("backups","readwrite",function(o){old.forEach(function(b){o.delete(b.key)})}).then(listBackups)}).then(function(){if(document.querySelector("#v-safety.on"))renderSafety()})}).catch(function(){})}
 var _rs=renderSafety;renderSafety=function(){_rs();var rows=AB.length?AB.map(function(b){var d=new Date(b.at);return '<button class="row" data-act="abrestore" data-k="'+b.key+'"><div class="mid"><div class="t">'+d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})+' at '+d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})+'</div><div class="s">'+b.accts+' accounts, '+b.txs+' transactions</div></div><span style="color:var(--accent);font-size:15px;font-weight:600">Restore</span></button>'}).join(""):'<div class="row" style="cursor:default"><div class="small dim" style="white-space:normal">No automatic backups yet. One is saved each day you open the app, once you have your own accounts.</div></div>';
  if(AB.before)rows+='<button class="row" data-act="abrestore" data-k="before-restore"><div class="mid"><div class="t">Before your last restore</div><div class="s">'+AB.before.accts+' accounts, '+AB.before.txs+' transactions</div></div><span style="color:var(--accent);font-size:15px;font-weight:600">Restore</span></button>';
+ if(AB.upd)rows+='<button class="row" data-act="abrestore" data-k="before-update"><div class="mid"><div class="t">Before the last app update</div><div class="s">'+AB.upd.accts+' accounts, '+AB.upd.txs+' transactions</div></div><span style="color:var(--accent);font-size:15px;font-weight:600">Restore</span></button>';
  $("v-safety").insertAdjacentHTML("beforeend",'<div class="hdr"><span>Automatic backups</span></div><div class="list">'+rows+'</div><div class="foot">The app keeps one backup a day, up to 7 days, inside this phone’s browser storage next to your data. That protects you from mistakes, but not from clearing Safari’s website data or deleting the app. Save a backup file now and then and keep it in Files or iCloud Drive.</div>')};
 
 var _rsy=renderSync;renderSync=function(){_rsy();$("v-sync").insertAdjacentHTML("afterbegin",'<div class="foot" style="margin:8px 16px;color:#f2b84b">This web version cannot connect to a Tailscale sync server yet, so the settings below do nothing. To share with your partner here, use Share my data with partner and Import Partner Data, which send a file.</div>')};
@@ -2140,12 +2167,15 @@ document.addEventListener("click",function(e){var el=e.target.closest&&e.target.
 
 /* ----- start: load what was saved, lock if there is a PIN ----- */
 function reveal(){PH.style.visibility=""}
-setTimeout(function(){if(!READY){READY=true;reveal()}},4000);
+setTimeout(reveal,4000);
 (async function(){
  try{DB=await open();var d=await tx("kv","readonly",function(o){return o.get("state")});
-  if(d&&d.ME&&d.ME.tx){apply(d,true);if(d.SAM&&S.imported){}}
+  if(d&&d.ME&&d.ME.tx){
+   /* keep a copy of what this phone had before a new version first opens it */
+   if(d.appVer!==APPVER){try{await tx("backups","readwrite",function(o){return o.put({key:"before-update",at:Date.now(),accts:d.ME.accts.length,txs:d.ME.tx.length,label:"Before update",data:d})})}catch(e){}}
+   try{apply(d,true)}catch(e){LOADFAIL=true;try{setNotice("This version could not open your saved data, so nothing was changed or saved. Your data is still on this phone.")}catch(x){}}}
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
- }catch(e){}
+ }catch(e){if(DB)LOADFAIL=true}
  READY=true;try{render()}catch(e){}
  if(S.pinSet&&(S.pin||S.pinH))lockApp();
  reveal();save();listBackups().then(autoBackup).catch(function(){})})();
@@ -2156,7 +2186,7 @@ setTimeout(function(){if(!READY){READY=true;reveal()}},4000);
 <script>
 /* ---------- What's new: shown once per viewer after each update. To announce an update, change WN.id and WN.items. ---------- */
 (function(){
-var WN={"id": "2026-11-24", "date": "November 24, 2026", "items": [["Icons match the app","Tab bar, toolbar and Settings icons are redrawn to look like the iPhone app's icons, with the filled tab bar."],["Only what works is shown","Face ID and Air sync are removed here because a web app cannot do them. The Sync screen now says it cannot connect yet, and partners share by file."],["Your data is kept now", "Everything you add, including photos, is saved on this phone and is still there when you reopen the app."],["Real backups", "A backup is saved automatically each day (last 7 kept), and Save a backup to Files makes a real file you can password-protect and restore later."],["Real PIN lock", "The app locks when you open it, and your PIN is stored scrambled, not as plain digits."],["Share with your partner by file", "Share my data makes a real file to send. Import Partner Data reads the file your partner sent."],["Duplicate transfers in Alerts", "Doubled transfers now show at the top of Alerts, with Merge and Not a duplicate."], ["Pending badge", "Transactions that are still pending show a Pending badge in Activity. Two sample charges show it."], ["Statements follow your order", "The monthly statement lists spending and income in the same order as your categories."]]};
+var WN={"id": "2026-11-24", "date": "November 24, 2026", "items": [["Totals roll like the app","The Summary net and the Accounts total roll like a slot machine each time you open those tabs, change month, or the total changes."],["Updates keep your data","New versions never replace your data, background photo, colors or widget order. A copy of your data is kept from just before each update, under Backups and safety."],["Icons match the app","Tab bar, toolbar and Settings icons are redrawn to look like the iPhone app's icons, with the filled tab bar."],["Only what works is shown","Face ID and Air sync are removed here because a web app cannot do them. The Sync screen now says it cannot connect yet, and partners share by file."],["Your data is kept now", "Everything you add, including photos, is saved on this phone and is still there when you reopen the app."],["Real backups", "A backup is saved automatically each day (last 7 kept), and Save a backup to Files makes a real file you can password-protect and restore later."],["Real PIN lock", "The app locks when you open it, and your PIN is stored scrambled, not as plain digits."],["Share with your partner by file", "Share my data makes a real file to send. Import Partner Data reads the file your partner sent."],["Duplicate transfers in Alerts", "Doubled transfers now show at the top of Alerts, with Merge and Not a duplicate."], ["Pending badge", "Transactions that are still pending show a Pending badge in Activity. Two sample charges show it."], ["Statements follow your order", "The monthly statement lists spending and income in the same order as your categories."]]};
 var K="tbs.whatsnew.seen",seen=null,ok=true;
 try{seen=localStorage.getItem(K)}catch(e){ok=false}
 if(!ok||seen===WN.id)return;

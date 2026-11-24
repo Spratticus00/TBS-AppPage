@@ -2008,7 +2008,7 @@ function rootNotice(m){showAlert("Track Budget Save",m,[{t:"OK",act:"rootok",b:1
  };
  Object.keys(P).forEach(function(k){SYM[k]=P[k]});
  eyeBtn=function(){var off=S.hide;return '<button class="ibtn" data-act="hide" aria-label="'+(off?"Show amounts":"Hide amounts")+'" aria-pressed="'+!!off+'"><svg viewBox="0 0 24 24"><path d="M1.8 12C4.2 7.4 7.8 5 12 5s7.8 2.4 10.2 7c-2.4 4.6-6 7-10.2 7S4.2 16.6 1.8 12z"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.9" fill="currentColor" stroke="none"/>'+(off?'<path d="M3.5 3.5l17 17" stroke-width="2"/>':"")+'</svg></button>'};
- var css=document.createElement("style");css.textContent=".tab svg{width:26px;height:26px}.sico{stroke-width:1.75}.ibtn svg{stroke-width:1.9}.roundb svg{stroke-width:2.4}.stdlb{background:var(--accent)!important;color:#fff!important}.stdlb svg{width:24px!important;height:24px!important;stroke-width:2!important}.csvb svg{width:24px!important;height:24px!important}.netbig{font-variant-numeric:tabular-nums}";document.head.appendChild(css);
+ var css=document.createElement("style");css.textContent=".tab svg{width:26px;height:26px}.sico{stroke-width:1.75}.ibtn svg{stroke-width:1.9}.roundb svg{stroke-width:2.4}.stdlb{background:var(--accent)!important;color:#fff!important}.stdlb svg{width:24px!important;height:24px!important;stroke-width:2!important}.csvb svg{width:24px!important;height:24px!important}.netbig{font-variant-numeric:tabular-nums}/* Frosted glass, like the app's tab bar and toolbar buttons */.tools,.roundb:not(.stdlb){position:relative}.tabbar,.tools,.roundb:not(.stdlb){isolation:isolate;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(255,255,255,.04) 46%,rgba(255,255,255,.07)),rgba(40,40,44,.42)!important;-webkit-backdrop-filter:blur(16px) saturate(1.9) brightness(1.08);backdrop-filter:blur(16px) saturate(1.9) brightness(1.08);border:1px solid rgba(255,255,255,.16)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -1px 1px rgba(255,255,255,.07),0 10px 28px rgba(0,0,0,.38)!important}.tabbar::before,.tools::before,.roundb:not(.stdlb)::before{content:\"\";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;background:radial-gradient(120% 90% at 18% -10%,rgba(255,255,255,.22),transparent 55%),radial-gradient(90% 120% at 100% 120%,rgba(255,255,255,.08),transparent 60%)}.tab.on{background:rgba(0,0,0,.32)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 0 0 1px rgba(255,255,255,.05)}.navbar .tr .roundb:not(.stdlb){width:46px;height:46px;border-radius:50%}.stdlb{box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 8px 22px rgba(0,0,0,.35)!important;border:1px solid rgba(255,255,255,.25)!important}.shh .roundb:not(.stdlb){width:44px;height:44px;border-radius:50%}";document.head.appendChild(css);
 })();
 
 /* ---------- Slot-machine roll for the Summary net and Accounts total, timed like the app ---------- */
@@ -2039,7 +2039,7 @@ function rootNotice(m){showAlert("Track Budget Save",m,[{t:"OK",act:"rootok",b:1
 (function(){
 var PH=$("phone");PH.style.visibility="hidden";
 var DB=null,READY=false,saveT=null,dirty=false,AB=[];
-var APPVER="2026-11-24c",LOADFAIL=false;
+var APPVER="2026-11-24d",LOADFAIL=false;
 var SKEYS=["ch","cats","rules","bills","goals","recur","dismissed","savedF","settled","imps","held","example","readA","chlog","sync","scope","month","imported","importedAt","accent","bunnyc","widgetc","bgMode","bgHex","bgImg","anim","bunny","worder","nameSet","remind","days","lastBackup","lastBackupAt","snooze","pwOn","pw","pinSet","pinH","pinSalt","face","delay","fails","lockUntil","pinDone","catOrd","hideWording","hideNums","feat","alerts","qaCat","qaAcct","impMem","imode","alertS"];
 /* things that belong to this phone, not to the data: a restored backup never changes them */
 var DEVKEYS=["remind","days","lastBackup","lastBackupAt","snooze","pwOn","pw","pinSet","pinH","pinSalt","face","delay","fails","lockUntil","pinDone","sync","scope","imported","importedAt","month"];
@@ -2165,6 +2165,139 @@ document.addEventListener("click",function(e){var el=e.target.closest&&e.target.
  else if(a==="restoreok"||a==="restorefile"||a==="restorelocked"||a==="unlockbk"){eat()}
 },true);
 
+
+/* ----- Real sync with a partner through the Easy Ledger / Track Budget Save sync server ----- */
+var SY={running:false,pending:false,lastHash:"",soonT:null,fetching:{}};
+var REF2001=978307200000;
+function toAppleDate(d){return d instanceof Date?(d.getTime()-REF2001)/1000:null}
+function fromAppleDate(n){return typeof n==="number"?new Date(n*1000+REF2001):(typeof n==="string"?new Date(n):new Date())}
+var UC={},UCK="";function uuidOf(s){if(UCK!==S.sync.key){UC={};UCK=S.sync.key}if(UC[s])return UC[s];var h=sha256b(new TextEncoder().encode(String(S.sync.key)+"|"+s)).toUpperCase();
+ return (UC[s]=h.slice(0,8)+"-"+h.slice(8,12)+"-5"+h.slice(13,16)+"-"+(((parseInt(h.charAt(16),16)&3)|8).toString(16).toUpperCase())+h.slice(17,20)+"-"+h.slice(20,32))}
+function myName(){var n=S.nameSet&&S.sync.name?String(S.sync.name).trim():"";n=n.replace(/[^A-Za-z0-9 _.\-]/g,"").slice(0,40).trim();
+ return n||("iPhone "+String(S.sync.key).slice(0,4).toUpperCase())}
+function syncReal(){return !S.example}
+function ensureKey(){if(!S.sync.key||String(S.sync.key).length<16){var r=new Uint8Array(24);crypto.getRandomValues(r);S.sync.key=Array.prototype.map.call(r,function(x){return ("0"+x.toString(16)).slice(-2)}).join("")}}
+function baseURL(){var s=String(S.sync.addr||"").trim();while(s.charAt(s.length-1)==="/")s=s.slice(0,-1);if(!s)return "";if(!/^https?:\/\//i.test(s))s="https://"+s;return s}
+function SErr(m){this.message=m}
+async function req(method,path,body,o){o=o||{};var b=baseURL();if(!b)throw new SErr("Enter the server address first.");
+ if(/^http:/i.test(b)&&location.protocol==="https:")throw new SErr("Use the https://…ts.net address that the sync server shows when it starts. iPhone does not let this app use plain http addresses.");
+ var h={};if(!o.noAuth)h.Authorization="Bearer "+(S.sync.token||"");if(o.claim)h["X-Member-Key"]=S.sync.key;if(body!=null)h["Content-Type"]=o.type||"application/json";
+ var ac=new AbortController(),tm=setTimeout(function(){ac.abort()},20000),r;
+ try{r=await fetch(b+path,{method:method,headers:h,body:body,signal:ac.signal,cache:"no-store"})}
+ catch(e){throw new SErr(e&&e.name==="AbortError"?"The server took too long to answer. Check that Tailscale is on and the server is running.":"Can’t reach the server. Check that Tailscale is on on this phone, the server is running, and the address is right.")}
+ finally{clearTimeout(tm)}
+ if(r.status===401)throw new SErr("401");
+ if(r.status===403){var j={};try{j=await r.json()}catch(e){}throw new SErr(j.error||"The server refused this.")}
+ if(r.status===404)throw new SErr("404");
+ if(!r.ok)throw new SErr("Server error ("+r.status+").");
+ return o.blob?await r.blob():o.text?await r.text():await r.json()}
+async function getToken(){var j=await req("GET","/health",null,{noAuth:true});if(j&&j.token){S.sync.token=j.token;return}
+ throw new SErr("This sync server does not hand out its access code. Replace easyledger_sync.py on the server computer with the newest one (version 1.2) and start it again.")}
+async function call(method,path,body,o){if(!S.sync.token)await getToken();
+ try{return await req(method,path,body,o)}catch(e){if(e.message==="401"){S.sync.token="";await getToken();return await req(method,path,body,o)}throw e}}
+
+/* What I send: the same shape the iPhone app sends, so web and app users can sync with each other. */
+function picIds(t){var p=t.pics||[];if(!p.length)return [];if(!t.pids||t.pids.length!==p.length){t.pids=p.map(function(u){return u?("w"+sha256b(new TextEncoder().encode(u)).slice(0,40)):""})}return t.pids.filter(Boolean)}
+function isPrivTx(t){if(t.priv)return true;var c=t.cat?ME.cats.filter(function(x){return x.id===t.cat})[0]:null;if(c&&c.priv)return true;
+ try{var rl=rulesList();var k=mKey(t.desc);if(rl.some(function(r){return r.priv&&r.key===k}))return true}catch(e){}return false}
+var AK={Checking:"checking",Savings:"savings",Credit:"credit",Cash:"cash",Loan:"loan"};
+function buildPayload(){var name=myName(),color=S.accent||null;
+ if(S.example)return {name:name,color:color,accounts:[],categories:[],txns:[]};
+ var acc=ME.accts.filter(function(a){return a.shared!==false}),ids={};acc.forEach(function(a){ids[a.id]=1});
+ var catKind=function(c){var k=String(c.kind||"").toLowerCase();return ["expense","income","transfer","mixed"].indexOf(k)>=0?k:"mixed"};
+ var txs=ME.tx.filter(function(t){return ids[t.acct]&&!isPrivTx(t)});
+ var replies=[];SAM.tx.forEach(function(t){if(String(t.id).indexOf("p-")!==0)return;(t.comments||[]).forEach(function(c,i){if(c.who==="You")replies.push({id:c.rid||uuidOf("r|"+t.id+"|"+i+"|"+c.text),txnID:String(t.id).slice(2),text:c.text,date:toAppleDate(c.at?new Date(c.at):t.date)})})});
+ return {name:name,color:color,
+  accounts:acc.map(function(a){return {id:uuidOf("a|"+a.id),name:a.name,kind:AK[a.kind]||"checking",opening:+a.open||0,shared:true,joint:!!a.joint,webKind:a.kind}}),
+  categories:ME.cats.map(function(c){return {id:uuidOf("c|"+c.id),name:c.name,kind:catKind(c),icon:c.icon||"tag",colorHex:c.color||"#9AA5B1",budget:+c.budget||0,alertPct:+c.alert||80,joint:!!c.joint,isPrivate:!!c.priv}}),
+  txns:txs.map(function(t){return {id:uuidOf("t|"+t.id),date:toAppleDate(t.date),desc:t.desc,amount:+t.amount,accountID:uuidOf("a|"+t.acct),categoryID:t.cat?uuidOf("c|"+t.cat):null,
+   note:t.note||"",comments:(t.comments||[]).filter(function(c){return c.who==="You"}).map(function(c,i){return {id:uuidOf("m|"+t.id+"|"+i+"|"+c.text),text:c.text,date:toAppleDate(c.at?new Date(c.at):t.date)}}),
+   photoIDs:picIds(t),splits:(t.splits||[]).map(function(s,i){return {id:uuidOf("s|"+t.id+"|"+i),categoryID:s.cat?uuidOf("c|"+s.cat):null,amount:+s.amount}}),
+   pairID:t.pair?uuidOf("p|"+t.pair):null,isPrivate:false,partnerShare:typeof t.pshare==="number"?t.pshare:null,isPending:!!t.pending}}),
+  replies:replies}}
+
+/* What I receive: my partner's shared data, read only, plus the comments they wrote on my transactions. */
+function applyPartnerRecord(rec){var p=rec.payload||{},P=function(x){return x?"p-"+x:null};
+ var oldMine={},oldPics={};SAM.tx.forEach(function(t){var mc=(t.comments||[]).filter(function(c){return c.who==="You"});if(mc.length)oldMine[t.id]=mc;(t.pids||[]).forEach(function(id,i){if(t.pics&&t.pics[i])oldPics[id]=t.pics[i]})});
+ var KA={checking:"Checking",savings:"Savings",credit:"Credit",cash:"Cash",loan:"Loan"},KC={expense:"Expense",income:"Income",transfer:"Transfer",mixed:"Mixed"};
+ SAM.accts=(p.accounts||[]).map(function(a){return {id:P(a.id),name:a.name,kind:a.webKind||KA[a.kind]||"Checking",open:+a.opening||0,shared:true,joint:!!a.joint}});
+ SAM.cats=(p.categories||[]).filter(function(c){return !c.isPrivate}).map(function(c){return {id:P(c.id),name:c.name,kind:KC[c.kind]||"Mixed",icon:c.icon,color:c.colorHex,budget:+c.budget||0,alert:c.alertPct,joint:!!c.joint}});
+ var who=String(p.name||rec.name||"Partner");
+ var tl=(p.txns||[]).map(function(t){var id=P(t.id),pids=(t.photoIDs||[]).slice();
+  var cm=(t.comments||[]).map(function(c){var d=fromAppleDate(c.date);return {who:who,text:c.text,when:d.toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}),at:d.getTime()}}).concat(oldMine[id]||[]);
+  return {id:id,owner:"sam",date:fromAppleDate(t.date),desc:t.desc,amount:+t.amount,acct:P(t.accountID),cat:t.categoryID&&t.categoryID!=="00000000-0000-0000-0000-000000000000"?P(t.categoryID):null,
+   note:t.note||"",comments:cm,pids:pids,pics:pids.map(function(x){return oldPics[x]||""}),photos:pids.length,
+   splits:(t.splits||[]).length>=2?t.splits.map(function(s){return {cat:P(s.categoryID),amount:+s.amount}}):undefined,pair:t.pairID?P(t.pairID):undefined,pshare:typeof t.partnerShare==="number"?t.partnerShare:undefined,pending:!!t.isPending}});
+ tl.sort(function(a,b){return b.date-a.date});SAM.tx=tl;SAMTX0.length=0;tl.forEach(function(t){SAMTX0.push(t)});
+ /* their comments on my transactions */
+ var byU={};ME.tx.forEach(function(t){byU[uuidOf("t|"+t.id)]=t;if(t.comments)t.comments=t.comments.filter(function(c){return !c.rid})});
+ (p.replies||[]).forEach(function(r){var t=byU[String(r.txnID).toUpperCase()];if(!t)return;var d=fromAppleDate(r.date);(t.comments=t.comments||[]).push({who:who,text:r.text,when:d.toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}),at:d.getTime(),rid:r.id})});
+ S.sync.partner=who.slice(0,40);S.sync.prev=rec.rev;S.sync.got=true;S.imported=false;calcBal()}
+
+async function pushPhotos(payload,enc){var need={};payload.txns.forEach(function(t){t.photoIDs.forEach(function(id){need[id]=1})});var ids=Object.keys(need);if(!ids.length)return;
+ var have={};try{(await call("GET","/v1/photos/"+enc)).ids.forEach(function(x){have[x]=1})}catch(e){return}
+ var byId={};ME.tx.forEach(function(t){(t.pids||[]).forEach(function(id,i){if(t.pics&&t.pics[i])byId[id]=t.pics[i]})});
+ for(var i=0;i<ids.length;i++){var id=ids[i];if(have[id]||!byId[id])continue;try{var bl=await (await fetch(byId[id])).blob();await call("PUT","/v1/photo/"+enc+"/"+id,bl,{claim:true,type:"image/jpeg"})}catch(e){S.sync.photoNote="Some photos could not be sent yet."}}}
+async function pullPhotos(enc){var miss=[];SAM.tx.forEach(function(t){(t.pids||[]).forEach(function(id,i){if(!t.pics[i]&&/^[A-Za-z0-9\-]{1,64}$/.test(id))miss.push([t,i,id])})});
+ var got=0;for(var k=0;k<Math.min(25,miss.length);k++){var m=miss[k];try{var bl=await call("GET","/v1/photo/"+enc+"/"+m[2],null,{blob:true});
+  var u=await new Promise(function(res){var fr=new FileReader();fr.onload=function(){res(fr.result)};fr.readAsDataURL(bl)});m[0].pics[m[1]]=u;got++}catch(e){}}
+ return got}
+
+function quietRender(){var ae=document.activeElement;if(ae&&ae.closest&&ae.closest("#v-sync")&&/INPUT|SELECT|TEXTAREA/.test(ae.tagName)){var st=$("stat");if(st)st.textContent=syncStatus();return}render()}
+function syncStatus(){var y=S.sync;if(!y.on)return "Sync is off";if(y.state==="sync")return "Syncing…";if(y.state==="err")return y.err||"Could not sync";if(y.state==="ok"&&y.t)return "Synced at "+new Date(y.t).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});return "Ready"}
+
+async function realSync(force){if(!syncReal()||!S.sync.on||!baseURL()||LOADFAIL)return;
+ if(SY.running){SY.pending=true;return}SY.running=true;var y=S.sync,wasErr=y.state==="err";y.state="sync";if(force)quietRender();
+ try{ensureKey();var name=myName(),enc=encodeURIComponent(name);
+  if(y.srvName&&y.srvName!==name){try{await call("DELETE","/v1/data/"+encodeURIComponent(y.srvName),null,{claim:true})}catch(e){}y.srvName=""}
+  var payload=buildPayload(),body=JSON.stringify(payload),hash=sha256b(new TextEncoder().encode(body)).slice(0,16);
+  if(force||hash!==SY.lastHash||y.srvName!==name){await call("PUT","/v1/data/"+enc,body,{claim:true});SY.lastHash=hash;y.srvName=name;await pushPhotos(payload,enc)}
+  var mem=await call("GET","/v1/members");y.members=(mem||[]).filter(function(m){return m.name!==name}).map(function(m){return {name:m.name,rev:m.rev}});
+  if(!y.pname||!y.members.some(function(m){return m.name===y.pname})){y.pname=y.members.length===1?y.members[0].name:(y.members.some(function(m){return m.name===y.pname})?y.pname:"")}
+  var info=y.members.filter(function(m){return m.name===y.pname})[0],changed=false;
+  if(info&&!S.imported&&(info.rev!==y.prev||!y.got)){var rec=await call("GET","/v1/data/"+encodeURIComponent(info.name));applyPartnerRecord(rec);changed=true}
+  if(info&&!S.imported){if(await pullPhotos(encodeURIComponent(info.name)))changed=true}
+  if(!info&&y.got&&!S.imported){y.got=false;y.partner="";SAM.tx=[];SAM.accts=[];SAM.cats=[];S.scope="me";changed=true}
+  y.state="ok";y.t=Date.now();y.err="";if(changed||force||wasErr)quietRender();else{var st=$("stat");if(st)st.textContent=syncStatus()}
+ }catch(e){y.state="err";y.err=e&&e.message==="404"?"The server is running an older version. Replace easyledger_sync.py with the newest one.":(e&&e.message)||"Could not sync";quietRender()}
+ finally{SY.running=false;if(SY.pending){SY.pending=false;setTimeout(function(){realSync()},300)}}}
+function syncSoon(){if(!syncReal()||!S.sync.on)return;clearTimeout(SY.soonT);SY.soonT=setTimeout(function(){realSync()},1500)}
+
+/* hook into the existing app: example data keeps the pretend partner, real data uses the server */
+var _doSync=doSync;doSync=function(quiet){if(!syncReal())return _doSync(quiet);realSync(!quiet)};
+var _hp=hasPartner;hasPartner=function(){if(!syncReal())return _hp();return !!((S.imported&&S.sync.partner)||(S.sync.on&&S.sync.partner&&S.sync.got))};
+syncLine=function(){var y=S.sync;if(!syncReal()){if(!y.on)return "Sync is off";if(y.state==="ok"&&y.t){var d=Math.round((Date.now()-y.t)/1000);return d<15?"Synced just now":d<90?"Synced "+d+" seconds ago":"Synced "+Math.floor(d/60)+" min ago"}return "Waiting to sync"}
+ if(!y.on)return "Sync is off";if(y.state==="err")return "Could not sync. See Settings, Sync with partner.";if(y.state==="ok"&&y.t){var d2=Math.round((Date.now()-y.t)/1000);return d2<15?"Synced just now":d2<90?"Synced "+d2+" seconds ago":"Synced "+Math.floor(d2/60)+" min ago"}return "Connecting…"};
+var _save2=save;save=function(){_save2();syncSoon()};
+document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")setTimeout(function(){realSync()},400)});
+/* leaving example data: forget the pretend partner and its pretend server */
+function dropDemoSync(){if(syncReal()&&S.sync.addr==="http://100.93.149.97:8787"){S.sync.on=false;S.sync.addr="";S.sync.token="";S.sync.state="";S.sync.t=0;if(!S.imported){S.sync.partner="";S.scope="me"}}}
+var _rr=render;render=function(){try{dropDemoSync()}catch(e){}_rr.apply(this,arguments)};
+
+renderSync=function(){var y=S.sync;
+ if(!syncReal()){$("v-sync").innerHTML=inlNav("Sync")+'<div class="foot" style="margin-top:6px">Sync uses your real data. Clear the example data first (Clear all on the Summary tab), then come back here.</div>';return}
+ var ms=y.members||[];
+ $("v-sync").innerHTML=inlNav("Sync")+
+ '<div class="list"><div class="row" style="cursor:default"><div class="mid"><div class="t">Sync with a partner</div></div><button class="sw '+(y.on?"on":"")+'" data-act="tbs-synctog" aria-label="Sync with a partner" aria-pressed="'+!!y.on+'"></button></div></div>'+
+ (S.imported?'<div class="foot">Sync is paused because you imported partner data from a file. Turning sync on replaces it with what syncs from your partner.</div>':"")+
+ '<div class="hdr"><span>Server address</span></div><div class="list"><div class="fld"><input class="plain" id="tbs-addr" value="'+esc(y.addr||"")+'" placeholder="https://computer-name.tailnet.ts.net" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="url" style="color:var(--accent)"></div></div>'+
+ '<div class="foot">Copy the address the sync server shows when it starts (it ends in .ts.net). Tailscale must be on on this phone.</div>'+
+ '<div class="list"><button class="row" data-act="tbs-syncnow"><div class="mid"><div class="t" style="color:var(--accent)">'+(y.on?"Sync now":"Connect")+'</div></div>'+(y.state==="sync"?'<span class="spin"></span>':"")+'</button>'+
+ '<div class="row" style="cursor:default"><div class="mid"><div class="t">Status</div></div><span class="dim" id="stat" style="text-align:right;white-space:normal;max-width:65%;'+(y.state==="err"?"color:var(--neg)":"")+'">'+esc(syncStatus())+'</span></div></div>'+
+ '<div class="hdr"><span>Partner</span></div><div class="list">'+
+ (ms.length>1?'<div class="row" style="cursor:default"><div class="mid"><div class="t">Share with</div></div><span class="menuv" style="color:var(--accent)"><select id="tbs-pname">'+(y.pname?"":'<option value="">Choose</option>')+ms.map(function(m){return '<option'+(m.name===y.pname?" selected":"")+'>'+esc(m.name)+'</option>'}).join("")+'</select></span></div>':"")+
+ (y.got&&y.partner?'<div class="row" style="cursor:default"><div class="mid"><div class="t">Showing</div></div><span class="dim">'+esc(y.partner)+'</span></div><button class="row" data-act="tbs-forget"><div class="mid"><div class="t" style="color:var(--neg)">Stop showing '+esc(y.partner)+'</div></div></button>':
+  '<div class="row" style="cursor:default"><div class="small dim" style="white-space:normal">'+(y.on&&y.state==="ok"?(ms.length>1?"Choose who to share with.":"No partner has connected yet. They show up here after they connect to the same server."):"Your partner shows up here once you are both connected.")+'</div></div>')+'</div>'+
+ '<div class="foot">You appear to your partner as “'+esc(myName())+'”'+(S.nameSet?"":". Set your name in Appearance to change it")+'. Everything on your shared accounts is sent, including notes, comments and photos. Private transactions, private categories and private merchants stay on this phone. Sync runs while the app is open.</div>'+
+ (y.photoNote?'<div class="foot" style="color:var(--neg)">'+esc(y.photoNote)+'</div>':"")};
+document.addEventListener("input",function(e){if(e.target.id==="tbs-addr"){var v=e.target.value;if(v!==S.sync.addr){S.sync.addr=v;S.sync.token="";S.sync.prev=null;S.sync.got=false;S.sync.state="";sched()}}});
+document.addEventListener("change",function(e){if(e.target.id==="tbs-pname"){S.sync.pname=e.target.value;S.sync.prev=null;S.sync.got=false;realSync(true)}});
+document.addEventListener("click",function(e){var el=e.target.closest&&e.target.closest("[data-act]");if(!el)return;var a=el.dataset.act;
+ if(a==="tbs-synctog"){e.stopImmediatePropagation();if(!S.sync.on&&S.imported){sheetResume();return}S.sync.on=!S.sync.on;if(!S.sync.on){S.sync.state="";S.scope="me"}render();if(S.sync.on)realSync(true)}
+ else if(a==="tbs-syncnow"){e.stopImmediatePropagation();var ad=$("tbs-addr");if(ad)S.sync.addr=ad.value;if(!baseURL()){S.sync.state="err";S.sync.err="Enter the server address first.";render();return}S.sync.on=true;render();realSync(true)}
+ else if(a==="tbs-forget"){e.stopImmediatePropagation();S.sync.pname="";S.sync.got=false;S.sync.partner="";SAM.tx=[];SAM.accts=[];SAM.cats=[];S.scope="me";S.sync.on=false;render()}
+},true);
+
 /* ----- start: load what was saved, lock if there is a PIN ----- */
 function reveal(){PH.style.visibility=""}
 setTimeout(reveal,4000);
@@ -2186,7 +2319,7 @@ setTimeout(reveal,4000);
 <script>
 /* ---------- What's new: shown once per viewer after each update. To announce an update, change WN.id and WN.items. ---------- */
 (function(){
-var WN={"id": "2026-11-24", "date": "November 24, 2026", "items": [["Totals roll like the app","The Summary net and the Accounts total roll like a slot machine each time you open those tabs, change month, or the total changes."],["Updates keep your data","New versions never replace your data, background photo, colors or widget order. A copy of your data is kept from just before each update, under Backups and safety."],["Icons match the app","Tab bar, toolbar and Settings icons are redrawn to look like the iPhone app's icons, with the filled tab bar."],["Only what works is shown","Face ID and Air sync are removed here because a web app cannot do them. The Sync screen now says it cannot connect yet, and partners share by file."],["Your data is kept now", "Everything you add, including photos, is saved on this phone and is still there when you reopen the app."],["Real backups", "A backup is saved automatically each day (last 7 kept), and Save a backup to Files makes a real file you can password-protect and restore later."],["Real PIN lock", "The app locks when you open it, and your PIN is stored scrambled, not as plain digits."],["Share with your partner by file", "Share my data makes a real file to send. Import Partner Data reads the file your partner sent."],["Duplicate transfers in Alerts", "Doubled transfers now show at the top of Alerts, with Merge and Not a duplicate."], ["Pending badge", "Transactions that are still pending show a Pending badge in Activity. Two sample charges show it."], ["Statements follow your order", "The monthly statement lists spending and income in the same order as your categories."]]};
+var WN={"id": "2026-11-24", "date": "November 24, 2026", "items": [["Real sync with your partner","Settings, Sync with partner now really syncs through your sync server. Enter its https address (ending in .ts.net) and tap Connect. Nothing else to type."],["Frosted glass","The tab bar and the buttons at the top have the same frosted glass look as the app."],["Totals roll like the app","The Summary net and the Accounts total roll like a slot machine each time you open those tabs, change month, or the total changes."],["Updates keep your data","New versions never replace your data, background photo, colors or widget order. A copy of your data is kept from just before each update, under Backups and safety."],["Icons match the app","Tab bar, toolbar and Settings icons are redrawn to look like the iPhone app's icons, with the filled tab bar."],["Only what works is shown","Face ID and Air sync are removed here because a web app cannot do them. The Sync screen now says it cannot connect yet, and partners share by file."],["Your data is kept now", "Everything you add, including photos, is saved on this phone and is still there when you reopen the app."],["Real backups", "A backup is saved automatically each day (last 7 kept), and Save a backup to Files makes a real file you can password-protect and restore later."],["Real PIN lock", "The app locks when you open it, and your PIN is stored scrambled, not as plain digits."],["Share with your partner by file", "Share my data makes a real file to send. Import Partner Data reads the file your partner sent."],["Duplicate transfers in Alerts", "Doubled transfers now show at the top of Alerts, with Merge and Not a duplicate."], ["Pending badge", "Transactions that are still pending show a Pending badge in Activity. Two sample charges show it."], ["Statements follow your order", "The monthly statement lists spending and income in the same order as your categories."]]};
 var K="tbs.whatsnew.seen",seen=null,ok=true;
 try{seen=localStorage.getItem(K)}catch(e){ok=false}
 if(!ok||seen===WN.id)return;

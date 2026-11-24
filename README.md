@@ -21,7 +21,8 @@ Replace `index.html` on GitHub with the new version. People get it the next time
 - The PIN locks the app when it opens. It is stored scrambled, but it only hides the screen: the data itself is not encrypted on the phone.
 - "Share my data with partner" makes a file; "Import Partner Data" reads one. This works between two people using this preview only.
 - Clearing Safari website data, or deleting the home-screen app, erases the data. Keep a backup file in Files or iCloud Drive.
-- Not possible in a web app: Face ID, live sync, Siri/Shortcuts, push notifications.
+- Sync with a partner works through the sync server (see sync-server/SETUP.md) while the app is open.
+- Not possible in a web app: Face ID, background sync while closed, Siri/Shortcuts, push notifications.
 
 ## Updating safely (v9)
 

@@ -282,7 +282,7 @@ body{overscroll-behavior:none}
   .note{display:none!important}
   .phone{position:fixed;inset:0;width:100%;max-width:none;height:100%;height:100dvh;min-height:0;border:0;border-radius:0}
   .status{height:env(safe-area-inset-top,0px);min-height:0;padding:0;overflow:hidden}.status>*{display:none!important}
-  .tabbar{bottom:max(8px,env(safe-area-inset-bottom,0px))}
+  .tabbar{bottom:max(8px,calc(env(safe-area-inset-bottom,0px) - 12px))}
   .view{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
   .sheet .panel{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
   .sheet .panel.tall{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
@@ -291,13 +291,23 @@ body{overscroll-behavior:none}
 }
 </style>
 
-<style>html.zf .phone{height:auto!important}</style>
+<style>html.zf .phone{height:auto!important}html.sa,html.sa body{height:var(--appH)!important;min-height:var(--appH);background:#000}html.sa .phone{top:0!important;bottom:auto!important;height:var(--appH)!important}</style>
 <script>
 /* Phone browsers in "desktop site" mode lay the page out about 1000px wide and shrink it. Scale it back so the app fills the screen. */
 (function(){var de=document.documentElement;
 function fit(){try{if(!(navigator.maxTouchPoints>0))return;de.style.zoom="";de.classList.remove("zf");
  var land=innerWidth>innerHeight,sw=land?Math.max(screen.width,screen.height):Math.min(screen.width,screen.height);
  if(sw<=600&&innerWidth>sw*1.25){de.style.zoom=String(innerWidth/sw);de.classList.add("zf")}}catch(e){}}
+/* Home-screen app: iOS reports a viewport that is short by the status bar height when the status bar is see-through, which left a black strip under the tab bar. Size the app to the whole screen instead. */
+function full(){try{var sa=navigator.standalone===true||matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches;if(!sa)return;
+ var land=innerWidth>innerHeight,h=land?Math.min(screen.width,screen.height):Math.max(screen.width,screen.height);if(!h||h<innerHeight)h=innerHeight;
+ de.style.setProperty("--appH",h+"px");de.classList.add("sa")}catch(e){}}
+full();window.addEventListener("resize",full);window.addEventListener("orientationchange",function(){setTimeout(full,250)});
+/* Installed on the home screen, iOS reports a screen height that leaves out the status bar, so the app stopped short of the bottom. Use the real screen height instead. */
+function full(){try{var sa=navigator.standalone||matchMedia("(display-mode: standalone)").matches;if(!sa)return;var ph=document.getElementById("phone");if(!ph)return;
+ var land=innerWidth>innerHeight,sh=land?Math.min(screen.width,screen.height):Math.max(screen.width,screen.height),hh=Math.max(innerHeight,sh);
+ ph.style.height=hh+"px";de.style.height=hh+"px";document.body.style.height=hh+"px"}catch(e){}}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",full);else full();window.addEventListener("resize",full);window.addEventListener("orientationchange",function(){setTimeout(full,250)});
 fit();window.addEventListener("resize",fit);window.addEventListener("orientationchange",function(){setTimeout(fit,200)})})();
 </script>
 <div class="note"><b>Track Budget Save, iPhone preview.</b> A clickable mock-up of the iPhone app with example data. It shows layout and behaviour only; the real app is the Xcode build. A made-up partner, Sam, lets you try the Me | Combined | Partner views, Share my data with partner, Import Partner Data and Air sync (both simulated here), backups, budgets and the statement preview.</div>

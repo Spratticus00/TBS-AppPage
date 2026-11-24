@@ -24,7 +24,7 @@ Updates come automatically when the owner makes changes to the app. People get i
 
 <img width="180" height="180" alt="Image" src="https://github.com/user-attachments/assets/845a186d-c497-4ba5-826b-3c7bcb90375c" />
 
-Track Budget Save is a native SwiftUI budgeting app for iPhone (iOS 17+). Everything stays on your device: there are no accounts, no bank logins and no analytics, and CSV files are read on the phone and never uploaded.  Check out the User Guide PDF under the new release for a full breakfown of the app!
+Everything stays on your device: there are no accounts, no bank logins and no analytics, and CSV files are read on the phone and never uploaded.
 
 ## Features
 
@@ -46,14 +46,13 @@ Track Budget Save is a native SwiftUI budgeting app for iPhone (iOS 17+). Everyt
 - Six-month Net Worth trend
 - Bank CSV import with duplicate detection and your own merchant rules (your categories always win over the bank's)
 
-### Alerts
+### Alerts (when app is open)
 - Bill reminders and budget warnings
 - Unusual-charge alerts
 - A review queue for transactions that need a category
 
 ### Partner sharing
 - Sync over Tailscale to a self-hosted server
-- Air sync between two nearby phones, with no internet needed
 - Share and import a data file
 - View your own, your partner's, or combined data
 - Private items never leave your phone
@@ -63,10 +62,10 @@ Track Budget Save is a native SwiftUI budgeting app for iPhone (iOS 17+). Everyt
 - Appearance options including background, widget color and an optional bunny companion
 
 ### Security and reliability
-- PIN and Face ID lock, with a Forgot PIN reset that erases data after two confirmations
+- PIN with a Forgot PIN reset that erases data after two confirmations
 - Encrypted backups, restore and hourly safety copies
 - Amounts stored as whole cents so totals always add up
 
 ## Tech
 
-SwiftUI, Keychain, Multipeer Connectivity and URLSession. An optional Python sync server (easyledger_sync.py) binds to a Tailscale address and uses hashed paths and token authentication.
+An optional Python sync server (easyledger_sync.py) binds to a Tailscale address and uses hashed paths and token authentication.

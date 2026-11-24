@@ -2034,6 +2034,80 @@ function rootNotice(m){showAlert("Track Budget Save",m,[{t:"OK",act:"rootok",b:1
   var minT=s.t+8,maxT=H-s.b-8-hh;if(t>maxT)t=maxT;if(t<minT)t=minT;p.style.top=t+"px";if(hh>H-s.t-s.b-16){p.style.maxHeight=(H-s.t-s.b-16)+"px";p.style.overflowY="auto"}};
 })();
 
+/* ---------- Edit mode like the app: red minus to delete, three-line handle to drag; app-style toolbar and statement header ---------- */
+(function(){var st=document.createElement("style");st.textContent=
+ ".capsule{height:46px!important;border-radius:23px!important;padding:0 6px!important;gap:4px!important;position:relative;isolation:isolate;overflow:hidden;"+
+ "background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(255,255,255,.04) 46%,rgba(255,255,255,.07)),rgba(40,40,44,.42)!important;-webkit-backdrop-filter:blur(16px) saturate(1.9) brightness(1.08);backdrop-filter:blur(16px) saturate(1.9) brightness(1.08);"+
+ "border:1px solid rgba(255,255,255,.16)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -1px 1px rgba(255,255,255,.07),0 10px 28px rgba(0,0,0,.38)!important}"+
+ ".capsule .roundb,.tools .roundb{background:transparent!important;border:0!important;box-shadow:none!important;width:44px!important;height:44px!important}"+
+ ".capsule .roundb::before,.tools .roundb::before{display:none!important}"+
+ ".navright{display:flex;gap:10px;align-items:center;pointer-events:auto}"+
+ ".editpill{height:46px;padding:0 20px;border-radius:23px;font:inherit;font-size:17px;font-weight:500;color:var(--accent);cursor:pointer;position:relative;isolation:isolate;overflow:hidden;"+
+ "background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(255,255,255,.04) 46%,rgba(255,255,255,.07)),rgba(40,40,44,.42);-webkit-backdrop-filter:blur(16px) saturate(1.9);backdrop-filter:blur(16px) saturate(1.9);"+
+ "border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 10px 28px rgba(0,0,0,.38)}"+
+ ".editdone{width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:var(--accent);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 8px 22px rgba(0,0,0,.35)}"+
+ ".editdone svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}"+
+ ".list.editing .row .mid,.list.editing .row .ico,.list.editing .row .badgeico,.list.editing .row>svg,.list.editing .row .amt{opacity:.55}"+
+ ".delm{width:26px;height:26px;border-radius:50%;background:#ff453a;flex:none;display:grid;place-items:center;margin-right:10px;cursor:pointer;border:0;padding:0}"+
+ ".delm::after{content:\"\";width:12px;height:2.4px;border-radius:2px;background:#fff}"+
+ ".drh{flex:none;width:44px;height:44px;margin:-8px -10px -8px 4px;display:grid;place-items:center;color:#8e8e93;touch-action:none;cursor:grab}"+
+ ".drh svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;fill:none}"+
+ ".row.dragging{position:relative;z-index:5;background:#2c2c2e!important;box-shadow:0 10px 30px rgba(0,0,0,.5);transition:none!important}"+
+ ".row.shift{transition:transform .15s}"+
+ /* statement viewer header like the app */
+ ".shh .roundb{padding:0!important;display:grid!important;place-items:center!important;width:44px!important;height:44px!important;border-radius:50%!important;min-width:0!important}"+
+ ".shh .roundb:not(.stdlb){color:#fff!important}"+
+ ".shh .stdlb{color:#fff!important}.shh .stdlb svg{display:block;margin:0!important}"+
+ "#panel.tall:has(.stpages){padding-left:3px!important;padding-right:3px!important;padding-top:8px!important}"+
+ "#panel.tall:has(.stpages)::before{content:\"\";display:block;width:36px;height:5px;border-radius:3px;background:rgba(255,255,255,.3);margin:0 auto 10px}"+
+ "#panel.tall:has(.stpages) .shh{padding:0 10px}"+
+ "#v-cats .row .s,#v-cats .row .t{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}"+
+ ".stpages{padding:0 0 10px!important}.stpages svg{border-radius:2px!important;margin-bottom:8px!important}";
+ document.head.appendChild(st);
+ var HANDLE='<svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
+ var CHECK='<svg viewBox="0 0 24 24"><path d="M5 12.5l4.6 4.6L19 7.5"/></svg>';
+
+ /* Categories: Edit pill, then the … and + capsule; edit mode shows minus and handles */
+ var _rc=renderCats;renderCats=function(){_rc();var v=$("v-cats");if(!v)return;
+  var cap=v.querySelector(".navbar .capsule");if(cap){var ord=cap.querySelector('[data-act="catord"]');if(ord)ord.remove();
+   var wrap=document.createElement("div");wrap.className="navright";cap.parentNode.insertBefore(wrap,cap);
+   wrap.insertAdjacentHTML("beforeend",S.catOrd?'<button class="editdone" data-act="catord" aria-label="Done">'+CHECK+'</button>':'<button class="editpill" data-act="catord">Edit</button>');wrap.appendChild(cap)}
+  if(!S.catOrd)return;var list=v.querySelector(".list");if(!list)return;list.classList.add("editing");
+  list.querySelectorAll('.row[data-act="editcat"]').forEach(function(r){var i=r.dataset.i;r.removeAttribute("data-swipe");r.dataset.act="noop";
+   r.querySelectorAll("[data-catmv]").forEach(function(x){x.remove()});var ch=r.querySelector(".chev");if(ch)ch.remove();
+   var kind=(catList()[+i]||{}).kind;r.insertAdjacentHTML("afterbegin",kind==="Transfer"?'<span style="width:36px;flex:none"></span>':'<span class="delm" data-catdel="'+i+'" role="button" aria-label="Delete"></span>');
+   r.insertAdjacentHTML("beforeend",'<span class="drh" data-drag="cat:'+i+'" aria-label="Drag to reorder">'+HANDLE+'</span>')})};
+
+ /* Accounts: handles instead of arrows while editing */
+ var _ra=renderAccounts;renderAccounts=function(){_ra();if(!S.acctEdit||scope()!=="me")return;var v=$("v-accounts");if(!v)return;
+  v.querySelectorAll("[data-acctmv]").forEach(function(x){var r=x.closest(".row");if(r&&!r.querySelector(".drh")){var id=x.dataset.acctmv.split(":")[1];r.insertAdjacentHTML("beforeend",'<span class="drh" data-drag="acct:'+id+'" aria-label="Drag to reorder">'+HANDLE+'</span>');var pen=r.querySelector(".dim");if(pen&&/✎/.test(pen.textContent))pen.remove()}x.remove()});
+  var l=v.querySelector(".drh");if(l)l.closest(".list").classList.add("editing")};
+
+ function moveCatTo(i,j){var l=catList();if(i===j||i<0||j<0||i>=l.length||j>=l.length)return;pushUndo("Reordered categories");var it=l.splice(i,1)[0];l.splice(j,0,it);
+  var names=l.map(function(c){return c.name}),ix=function(c){var k=names.indexOf(c.name);return k<0?9999:k};ME.cats.sort(function(a,b){return ix(a)-ix(b)});render()}
+ function moveAcctTo(id,j){var l=ME.accts,i=l.findIndex(function(a){return a.id===id});if(i<0||i===j||j<0||j>=l.length)return;pushUndo("Reordered accounts");var it=l.splice(i,1)[0];l.splice(j,0,it);render()}
+
+ /* dragging by the handle */
+ var D=null;
+ document.addEventListener("pointerdown",function(e){var h=e.target.closest&&e.target.closest("[data-drag]");if(!h)return;e.preventDefault();e.stopPropagation();
+  var row=h.closest(".row"),list=row.parentNode,rows=[].slice.call(list.querySelectorAll(".row")).filter(function(r){return r.querySelector("[data-drag]")});
+  D={h:h,row:row,rows:rows,from:rows.indexOf(row),y0:e.clientY,to:rows.indexOf(row),mids:rows.map(function(r){var b=r.getBoundingClientRect();return b.top+b.height/2}),hgt:row.getBoundingClientRect().height,id:e.pointerId};
+  try{h.setPointerCapture(e.pointerId)}catch(x){}row.classList.add("dragging");rows.forEach(function(r){if(r!==row)r.classList.add("shift")})},true);
+ document.addEventListener("pointermove",function(e){if(!D||e.pointerId!==D.id)return;e.preventDefault();var dy=e.clientY-D.y0;D.row.style.transform="translateY("+dy+"px)";
+  var c=D.mids[D.from]+dy,to=D.from;D.mids.forEach(function(m,k){if(k<D.from&&c<m)to=Math.min(to,k);if(k>D.from&&c>m)to=Math.max(to,k)});D.to=to;
+  D.rows.forEach(function(r,k){if(r===D.row)return;var s=0;if(D.from<to&&k>D.from&&k<=to)s=-D.hgt;if(D.from>to&&k<D.from&&k>=to)s=D.hgt;r.style.transform=s?"translateY("+s+"px)":""});
+  /* scroll the list when dragging near the top or bottom */
+  var view=D.row.closest(".view");if(view){var vb=view.getBoundingClientRect();if(e.clientY<vb.top+140)view.scrollTop-=8;else if(e.clientY>vb.bottom-150)view.scrollTop+=8}},{passive:false});
+ function endDrag(e){if(!D)return;var d=D;D=null;d.rows.forEach(function(r){r.style.transform="";r.classList.remove("shift","dragging")});window._swiped=Date.now();
+  var p=d.h.dataset.drag.split(":");if(d.to!==d.from){if(p[0]==="cat")moveCatTo(+p[1],d.to);else if(p[0]==="acct")moveAcctTo(p.slice(1).join(":"),d.to)}}
+ document.addEventListener("pointerup",endDrag,true);document.addEventListener("pointercancel",endDrag,true);
+
+ /* red minus: same confirmation as swiping a category away */
+ document.addEventListener("click",function(e){var m=e.target.closest&&e.target.closest("[data-catdel]");if(!m)return;e.stopImmediatePropagation();e.preventDefault();
+  var i=+m.dataset.catdel,dc=catList()[i];if(!dc)return;window._dci=i;var idc=ME.cats.filter(function(x){return x.name===dc.name})[0],nn=idc?ME.tx.filter(function(t){return t.cat===idc.id}).length:0;
+  dlg("Delete this category?",nn+" transaction"+(nn===1?"":"s")+" in it will become Uncategorized, and merchant rules that use it are removed. You can undo this from the Summary tab.",[{t:"Delete category",act:"catdelok",red:1}])},true);
+})();
+
 /* ---------- Slot-machine roll for the Summary net and Accounts total, timed like the app ---------- */
 (function(){var lastKey=null,lastRun=0;
  rollHero=function(){if(S.anim===false)return;
@@ -2062,7 +2136,7 @@ function rootNotice(m){showAlert("Track Budget Save",m,[{t:"OK",act:"rootok",b:1
 (function(){
 var PH=$("phone");PH.style.visibility="hidden";
 var DB=null,READY=false,saveT=null,dirty=false,AB=[];
-var APPVER="2026-11-24f",LOADFAIL=false;window.TBS_VERSION=APPVER;
+var APPVER="2026-11-24g",LOADFAIL=false;window.TBS_VERSION=APPVER;
 var SKEYS=["ch","cats","rules","bills","goals","recur","dismissed","savedF","settled","imps","held","example","readA","chlog","sync","scope","month","imported","importedAt","accent","bunnyc","widgetc","bgMode","bgHex","bgImg","anim","bunny","worder","nameSet","remind","days","lastBackup","lastBackupAt","snooze","pwOn","pw","pinSet","pinH","pinSalt","face","delay","fails","lockUntil","pinDone","catOrd","hideWording","hideNums","feat","alerts","qaCat","qaAcct","impMem","imode","alertS"];
 /* things that belong to this phone, not to the data: a restored backup never changes them */
 var DEVKEYS=["remind","days","lastBackup","lastBackupAt","snooze","pwOn","pw","pinSet","pinH","pinSalt","face","delay","fails","lockUntil","pinDone","sync","scope","imported","importedAt","month"];
@@ -2342,7 +2416,7 @@ setTimeout(reveal,4000);
 <script>
 /* ---------- What's new: shown once per viewer after each update. To announce an update, change WN.id and WN.items. ---------- */
 (function(){
-var WN={"id": "2026-11-24", "date": "November 24, 2026", "items": [["Updates arrive right away","New versions now show the next time you open the app. The version number is at the bottom of Settings."],["Buttons clear of the status bar","The photo viewer\u2019s close and delete buttons, full-height sheets, pop-up menus and confirmation dialogs now stay clear of the clock, the Dynamic Island and the home bar."],["Real sync with your partner","Settings, Sync with partner now really syncs through your sync server. Enter its https address (ending in .ts.net) and tap Connect. Nothing else to type."],["Frosted glass","The tab bar and the buttons at the top have the same frosted glass look as the app."],["Totals roll like the app","The Summary net and the Accounts total roll like a slot machine each time you open those tabs, change month, or the total changes."],["Updates keep your data","New versions never replace your data, background photo, colors or widget order. A copy of your data is kept from just before each update, under Backups and safety."],["Icons match the app","Tab bar, toolbar and Settings icons are redrawn to look like the iPhone app's icons, with the filled tab bar."],["Only what works is shown","Face ID and Air sync are removed here because a web app cannot do them. The Sync screen now says it cannot connect yet, and partners share by file."],["Your data is kept now", "Everything you add, including photos, is saved on this phone and is still there when you reopen the app."],["Real backups", "A backup is saved automatically each day (last 7 kept), and Save a backup to Files makes a real file you can password-protect and restore later."],["Real PIN lock", "The app locks when you open it, and your PIN is stored scrambled, not as plain digits."],["Share with your partner by file", "Share my data makes a real file to send. Import Partner Data reads the file your partner sent."],["Duplicate transfers in Alerts", "Doubled transfers now show at the top of Alerts, with Merge and Not a duplicate."], ["Pending badge", "Transactions that are still pending show a Pending badge in Activity. Two sample charges show it."], ["Statements follow your order", "The monthly statement lists spending and income in the same order as your categories."]]};
+var WN={"id": "2026-11-24", "date": "November 24, 2026", "items": [["Edit like the app","Categories and Accounts use Edit: drag the three-line handle to reorder, and tap the red minus to delete a category. The statement viewer header matches the app."],["Updates arrive right away","New versions now show the next time you open the app. The version number is at the bottom of Settings."],["Buttons clear of the status bar","The photo viewer\u2019s close and delete buttons, full-height sheets, pop-up menus and confirmation dialogs now stay clear of the clock, the Dynamic Island and the home bar."],["Real sync with your partner","Settings, Sync with partner now really syncs through your sync server. Enter its https address (ending in .ts.net) and tap Connect. Nothing else to type."],["Frosted glass","The tab bar and the buttons at the top have the same frosted glass look as the app."],["Totals roll like the app","The Summary net and the Accounts total roll like a slot machine each time you open those tabs, change month, or the total changes."],["Updates keep your data","New versions never replace your data, background photo, colors or widget order. A copy of your data is kept from just before each update, under Backups and safety."],["Icons match the app","Tab bar, toolbar and Settings icons are redrawn to look like the iPhone app's icons, with the filled tab bar."],["Only what works is shown","Face ID and Air sync are removed here because a web app cannot do them. The Sync screen now says it cannot connect yet, and partners share by file."],["Your data is kept now", "Everything you add, including photos, is saved on this phone and is still there when you reopen the app."],["Real backups", "A backup is saved automatically each day (last 7 kept), and Save a backup to Files makes a real file you can password-protect and restore later."],["Real PIN lock", "The app locks when you open it, and your PIN is stored scrambled, not as plain digits."],["Share with your partner by file", "Share my data makes a real file to send. Import Partner Data reads the file your partner sent."],["Duplicate transfers in Alerts", "Doubled transfers now show at the top of Alerts, with Merge and Not a duplicate."], ["Pending badge", "Transactions that are still pending show a Pending badge in Activity. Two sample charges show it."], ["Statements follow your order", "The monthly statement lists spending and income in the same order as your categories."]]};
 var K="tbs.whatsnew.seen",seen=null,ok=true;
 try{seen=localStorage.getItem(K)}catch(e){ok=false}
 if(!ok||seen===WN.id)return;
